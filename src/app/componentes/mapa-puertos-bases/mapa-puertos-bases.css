@@ -1,0 +1,128 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.mapa-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.panel-card {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.panel-card .card-body {
+  padding: 16px;
+}
+
+.controles {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-toggle {
+  border: 1px solid #2b4a68;
+  background: #ffffff;
+  color: #2b4a68;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-toggle.activo {
+  background: #2b4a68;
+  color: #ffffff;
+}
+
+.btn-toggle:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.mensaje-error {
+  color: #8f1d1d;
+  margin-bottom: 10px;
+}
+
+.mapa {
+  width: 100%;
+  height: calc(100vh - 240px);
+  min-height: 450px;
+  border: 1px solid #d1d9e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1999;
+}
+
+.modal-custom {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(760px, 92vw);
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-body-custom {
+  padding: 14px 16px;
+  overflow: auto;
+}
+
+:host ::ng-deep .marker-label {
+  background: rgba(20, 35, 52, 0.88);
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+:host ::ng-deep .marker-label::before {
+  display: none;
+}
+
+:host ::ng-deep .marker-custom {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+
+:host ::ng-deep .marker-puerto {
+  background: #1f78b4;
+}
+
+:host ::ng-deep .marker-base {
+  background: #f08c00;
+}

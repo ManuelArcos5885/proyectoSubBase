@@ -1,3 +1,43 @@
 import { Routes } from '@angular/router';
+import { InicioComponent } from './componentes/inicio/inicio';
+import { TripulanteComponent } from './componentes/tripulante/tripulante';
+import { TripulanteDetalleComponent } from './componentes/tripulante-detalle/tripulante-detalle';
+import { BarcoComponent } from './componentes/barco/barco';
+import { BarcoDetalleComponent } from './componentes/barco-detalle/barco-detalle';
+import { LoginComponent } from './componentes/login/login';
+import { RegisterComponent } from './componentes/register/register';
+import { PuertoComponent } from './componentes/puerto/puerto';
+import { PuertoDetalleComponent } from './componentes/puerto-detalle/puerto-detalle';
+import { BaseComponent } from './componentes/base/base';
+import { BaseDetalleComponent } from './componentes/base-detalle/base-detalle';
+import { CampanaComponent } from './componentes/campana/campana';
+import { CampanaDetalleComponent } from './componentes/campana-detalle/campana-detalle';
+import { UsersComponent } from './componentes/users/users';
+import { UsersDetalleComponent } from './componentes/users-detalle/users-detalle';
+import { MapaPuertosBasesComponent } from './componentes/mapa-puertos-bases/mapa-puertos-bases';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'inicio', component: InicioComponent },
+  { path: 'tripulante', component: TripulanteComponent },
+  { path: 'tripulante-detalle/:id', component: TripulanteDetalleComponent },
+  { path: 'tripulante-detalle', component: TripulanteDetalleComponent },
+  { path: 'barco', component: BarcoComponent },
+  { path: 'barco-detalle/:id', component: BarcoDetalleComponent },
+  { path: 'barco-detalle', component: BarcoDetalleComponent },
+  { path: 'puerto', component: PuertoComponent },
+  { path: 'puerto-detalle/:id', component: PuertoDetalleComponent },
+  { path: 'puerto-detalle', component: PuertoDetalleComponent },
+  { path: 'base', component: BaseComponent },
+  { path: 'base-detalle/:id', component: BaseDetalleComponent },
+  { path: 'base-detalle', component: BaseDetalleComponent },
+  { path: 'campana', component: CampanaComponent },
+  { path: 'campana-detalle/:id', component: CampanaDetalleComponent },
+  { path: 'campana-detalle', component: CampanaDetalleComponent },
+  { path: 'users', component: UsersComponent },
+  { path: 'users-detalle/:id', component: UsersDetalleComponent },
+  { path: 'users-detalle', component: UsersDetalleComponent },
+  { path: 'mapa-puertos-bases', component: MapaPuertosBasesComponent },
+  { path: '', redirectTo: 'login', pathMatch: 'full' }
+];

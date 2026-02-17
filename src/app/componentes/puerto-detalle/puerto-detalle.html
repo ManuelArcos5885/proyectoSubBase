@@ -1,0 +1,159 @@
+<app-navbar></app-navbar>
+<div class="container my-4">
+  <div class="card panel-card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{ puertoNombre }}</h3>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-9 order-2 order-md-1">
+      <div class="card panel-card" *ngIf="activeTab === 'datos'">
+        <div class="card-body">
+          <h5 class="mb-3">Datos del puerto</h5>
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" [(ngModel)]="puerto.nombre">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Comunidad</label>
+              <input class="form-control" [(ngModel)]="puerto.comunidad">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Provincia</label>
+              <input class="form-control" [(ngModel)]="puerto.provincia">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Direccion</label>
+            <input class="form-control" [(ngModel)]="puerto.direccion">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Latitud</label>
+              <input
+                class="form-control"
+                type="number"
+                step="any"
+                [(ngModel)]="puerto.lat"
+                (change)="aplicarCoordenadasManual()"
+              >
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Longitud</label>
+              <input
+                class="form-control"
+                type="number"
+                step="any"
+                [(ngModel)]="puerto.lng"
+                (change)="aplicarCoordenadasManual()"
+              >
+            </div>
+          </div>
+
+          <p class="coords-texto mb-2">{{ coordsTexto }}</p>
+          <div id="mapa-ubicacion-puerto" class="mapa-ubicacion"></div>
+
+          <div *ngIf="mensaje" class="alert alert-info">
+            {{ mensaje }}
+          </div>
+
+          <button class="btn btn-primary w-100" (click)="save()">
+            {{ creando ? 'Crear puerto' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'barcos'">
+        <div class="card panel-card mb-3 barcos-panel">
+          <div class="card-body">
+            <h5 class="mb-3">Asignar barco</h5>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-9">
+                <label class="form-label">Barco</label>
+                <app-barco-search-select
+                  [barcos]="barcosDisponibles"
+                  [(selectedId)]="selectedBarcoId">
+                </app-barco-search-select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-primary w-100" (click)="agregarBarco()">
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="barcosMensaje" class="alert alert-info mt-3">
+              {{ barcosMensaje }}
+            </div>
+          </div>
+        </div>
+
+        <div class="card panel-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Barcos en este puerto</h5>
+              <span class="text-muted" *ngIf="cargandoBarcos">Cargando...</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Barco</th>
+                    <th>Fecha barco</th>
+                    <th>Alta</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of barcos">
+                    <td>
+                      <button class="btn p-0 text-start fw-semibold text-dark text-decoration-none border-0 bg-transparent" (click)="goToBarcoDetalle(item)">
+                        {{ item.nombre || item.idBarco }}
+                      </button>
+                    </td>
+                    <td>{{ item.fecha ? (item.fecha | date: 'shortDate') : '-' }}</td>
+                    <td>{{ item.created_at ? (item.created_at | date: 'short') : '-' }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-outline-danger btn-sm" (click)="quitarBarco(item)">
+                        Quitar
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!cargandoBarcos && barcos.length === 0">
+                    <td colspan="4" class="text-muted">Sin barcos asignados.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 order-1 order-md-2">
+      <div class="card panel-card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted">Secciones</h6>
+          <button class="btn w-100 mb-2"
+                  [class.btn-primary]="activeTab === 'datos'"
+                  [class.btn-outline-primary]="activeTab !== 'datos'"
+                  (click)="setTab('datos')">
+            Datos
+          </button>
+          <button class="btn w-100"
+                  [class.btn-primary]="activeTab === 'barcos'"
+                  [class.btn-outline-primary]="activeTab !== 'barcos'"
+                  (click)="setTab('barcos')">
+            Barcos
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+.navbar-custom {
+  background-color: #0b2f4f;
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link,
+.navbar-custom .btn-link {
+  color: #d9dee5;
+}
+
+.navbar-custom .nav-link:hover,
+.navbar-custom .navbar-brand:hover,
+.navbar-custom .btn-link:hover {
+  color: #ffffff;
+}
+
+.brand-title {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.brand-sub {
+  color: #f3c400;
+}
+
+.brand-base {
+  color: #d9dee5;
+  font-size: 0.85em;
+}

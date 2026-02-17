@@ -1,0 +1,28 @@
+<div class="position-relative">
+  <input
+    class="form-control"
+    type="text"
+    [ngModel]="query"
+    (ngModelChange)="query = $event; onQueryChange()"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    placeholder="Buscar por ID, nombre o apellidos..."
+  >
+
+  <div class="dropdown-panel" *ngIf="showDropdown">
+    <button
+      type="button"
+      class="dropdown-item"
+      *ngFor="let item of filtered"
+      (mousedown)="select(item)"
+    >
+      <div class="fw-semibold">{{ item.apellidos }} {{ item.nombre }}</div>
+      <div class="small text-muted">ID: {{ item.user_id }} | {{ item.puesto || 'Sin puesto' }}</div>
+    </button>
+
+    <div class="dropdown-empty text-muted" *ngIf="filtered.length === 0">
+      Sin coincidencias.
+    </div>
+  </div>
+</div>
+

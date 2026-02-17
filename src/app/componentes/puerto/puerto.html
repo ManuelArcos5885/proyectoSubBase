@@ -1,0 +1,44 @@
+<app-navbar></app-navbar>
+
+<div class="container my-4">
+  <div class="panel-card mb-3">
+    <div class="panel-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Puertos</h3>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted" *ngIf="cargando">Cargando...</span>
+        <button class="btn btn-primary btn-sm" (click)="nuevoPuerto()">Nuevo puerto</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+  <div *ngIf="mensaje" class="alert alert-success">
+    {{ mensaje }}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6 col-lg-4" *ngFor="let item of puertos">
+      <div class="panel-card h-100 puerto-card" (click)="goDetalle(item)">
+        <div class="panel-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <h5 class="mb-1">{{ item.nombre }}</h5>
+            <button class="btn btn-outline-danger btn-sm" (click)="eliminarPuerto(item, $event)">Eliminar</button>
+          </div>
+          <div class="small">
+            <div><strong>Comunidad:</strong> {{ item.comunidad || '-' }}</div>
+            <div><strong>Provincia:</strong> {{ item.provincia || '-' }}</div>
+            <div><strong>Direccion:</strong> {{ item.direccion || '-' }}</div>
+            <div><strong>Barcos en puerto:</strong> {{ item.totalBarcos ?? 0 }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12" *ngIf="!cargando && puertos.length === 0">
+      <div class="panel-card">
+        <div class="panel-body text-muted">No hay puertos para mostrar.</div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,66 @@
+<app-navbar></app-navbar>
+<div class="container my-4">
+  <div class="card panel-card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{ userEmail }}</h3>
+      <span class="text-muted" *ngIf="user.id">ID: {{ user.id }}</span>
+    </div>
+  </div>
+
+  <div class="card panel-card">
+    <div class="card-body">
+      <h5 class="mb-3">Datos del usuario</h5>
+      <div *ngIf="cargando" class="text-muted mb-3">Cargando...</div>
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" [(ngModel)]="user.email">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Rol</label>
+          <select class="form-select" [(ngModel)]="user.role">
+            <option value="TRIPULANTE">TRIPULANTE</option>
+            <option value="ADMIN">ADMIN</option>
+            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" [(ngModel)]="user.nombre">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Apellidos</label>
+          <input class="form-control" [(ngModel)]="user.apellidos">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Telefono</label>
+          <input class="form-control" [(ngModel)]="user.telefono">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Nacionalidad</label>
+          <input class="form-control" [(ngModel)]="user.nacionalidad">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Puesto</label>
+        <input class="form-control" [(ngModel)]="user.puesto">
+      </div>
+
+      <div *ngIf="mensaje" class="alert alert-info">
+        {{ mensaje }}
+      </div>
+
+      <button class="btn btn-primary w-100" (click)="save()">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+

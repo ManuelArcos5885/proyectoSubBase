@@ -1,0 +1,68 @@
+<app-navbar></app-navbar>
+<div class="container my-4">
+  <div class="card panel-card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{ baseNombre }}</h3>
+    </div>
+  </div>
+
+  <div class="card panel-card">
+    <div class="card-body">
+      <h5 class="mb-3">Datos de la base</h5>
+      <div class="row">
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" [(ngModel)]="base.nombre">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Comunidad</label>
+          <input class="form-control" [(ngModel)]="base.comunidad">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Provincia</label>
+          <input class="form-control" [(ngModel)]="base.provincia">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Direccion</label>
+        <input class="form-control" [(ngModel)]="base.direccion">
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Latitud</label>
+          <input
+            class="form-control"
+            type="number"
+            step="any"
+            [(ngModel)]="base.lat"
+            (change)="aplicarCoordenadasManual()"
+          >
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Longitud</label>
+          <input
+            class="form-control"
+            type="number"
+            step="any"
+            [(ngModel)]="base.lng"
+            (change)="aplicarCoordenadasManual()"
+          >
+        </div>
+      </div>
+
+      <p class="coords-texto mb-2">{{ coordsTexto }}</p>
+      <div id="mapa-ubicacion-base" class="mapa-ubicacion"></div>
+
+      <div *ngIf="mensaje" class="alert alert-info">
+        {{ mensaje }}
+      </div>
+
+      <button class="btn btn-primary w-100" (click)="save()">
+        {{ creando ? 'Crear base' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+</div>

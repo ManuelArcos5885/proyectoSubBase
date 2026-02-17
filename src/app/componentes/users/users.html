@@ -1,0 +1,40 @@
+<app-navbar></app-navbar>
+
+<div class="container my-4">
+  <div class="panel-card mb-3">
+    <div class="panel-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Users</h3>
+      <span class="text-muted" *ngIf="cargando">Cargando...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+  <div *ngIf="mensaje" class="alert alert-success">
+    {{ mensaje }}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6 col-lg-4" *ngFor="let item of users">
+      <div class="panel-card h-100 user-card" (click)="goDetalle(item)">
+        <div class="panel-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <h5 class="mb-1">{{ item.email }}</h5>
+            <button class="btn btn-outline-danger btn-sm" (click)="eliminarUser(item, $event)">Eliminar</button>
+          </div>
+          <div class="text-muted mb-2">{{ item.role || 'Sin rol' }}</div>
+          <div class="small">
+            <div><strong>Nombre:</strong> {{ item.nombre || '-' }}</div>
+            <div><strong>Apellidos:</strong> {{ item.apellidos || '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12" *ngIf="!cargando && users.length === 0">
+      <div class="panel-card">
+        <div class="panel-body text-muted">No hay usuarios para mostrar.</div>
+      </div>
+    </div>
+  </div>
+</div>

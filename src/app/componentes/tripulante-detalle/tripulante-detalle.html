@@ -1,0 +1,196 @@
+<app-navbar></app-navbar>
+<div class="container my-4">
+  <div class="card panel-card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{ tripulanteNombre }}</h3>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-9 order-2 order-md-1">
+      <div class="card panel-card mb-3" *ngIf="activeTab === 'datos'">
+        <div class="card-body">
+          <h5 class="mb-3">Datos del tripulante</h5>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" [(ngModel)]="tripulante.nombre">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Apellidos</label>
+              <input class="form-control" [(ngModel)]="tripulante.apellidos">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Telefono</label>
+              <input class="form-control" [(ngModel)]="tripulante.telefono">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nacionalidad</label>
+              <input class="form-control" [(ngModel)]="tripulante.nacionalidad">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Puesto</label>
+            <input class="form-control" [(ngModel)]="tripulante.puesto">
+          </div>
+
+          <div *ngIf="mensaje" class="alert alert-info">
+            {{ mensaje }}
+          </div>
+
+          <button class="btn btn-primary w-100" (click)="save()" [disabled]="!canEdit">
+            Guardar
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'documentos'">
+        <div class="card panel-card mb-3">
+          <div class="card-body">
+            <h5 class="mb-3">Subida de documento PDF</h5>
+            <div class="mb-3">
+              <label class="form-label">Tipo de documento</label>
+              <select class="form-select" [(ngModel)]="documentoTipo">
+                <option value="CERTIFICADO_NACIONAL_SEGURIDAD">Certificado nacional de seguridad</option>
+                <option value="CERTIFICADO_NACIONAL_ARQUEO">Certificado nacional de arqueo</option>
+                <option value="CERTIFICADO_SEGURIDAD_RADIOELECTRICA">Certificado de seguridad radioeléctrica</option>
+                <option value="ACTA_ESTABILIDAD">Acta de estabilidad</option>
+                <option value="CERTIFICADO_NAVEGABILIDAD">Certificado de navegabilidad</option>
+                <option value="OTRO">Otros</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha de caducidad</label>
+              <input type="date" class="form-control" [(ngModel)]="fechaCaducidad">
+            </div>
+            <div class="mb-3">
+              <input type="file" class="form-control" accept="application/pdf" (change)="onFileSelected($event)">
+            </div>
+
+            <div *ngIf="documentoMensaje" class="alert alert-info">
+              {{ documentoMensaje }}
+            </div>
+
+            <button class="btn btn-outline-primary w-100" (click)="subirDocumento()" [disabled]="subiendo || !canEdit">
+              {{ subiendo ? 'Subiendo...' : 'Subir documento' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="card panel-card">
+          <div class="card-body position-relative">
+            <app-loading-overlay [show]="cargandoDocumentos" [fullscreen]="false" text="Cargando documentos..."></app-loading-overlay>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Documentos</h5>
+              <span class="text-muted" *ngIf="cargandoDocumentos">Cargando...</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Caducidad</th>
+                    <th>Fecha</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let doc of documentos">
+                    <td>
+                      <button class="btn btn-link p-0" (click)="descargarDocumento(doc)">
+                        {{ fileNameFromPath(doc.archivo_path) }}
+                      </button>
+                    </td>
+                    <td>{{ doc.tipo }}</td>
+                    <td>{{ doc.fecha_caducidad ? (doc.fecha_caducidad | date: 'shortDate') : '-' }}</td>
+                    <td>{{ doc.created_at ? (doc.created_at | date: 'short') : '-' }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-outline-danger btn-sm py-0 px-2 text-nowrap" (click)="quitarDocumento(doc)" [disabled]="!canEdit">
+                        Quitar
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!cargandoDocumentos && documentos.length === 0">
+                    <td colspan="5" class="text-muted">Sin documentos.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'enroles'">
+        <div class="card panel-card">
+          <div class="card-body position-relative">
+            <app-loading-overlay [show]="cargandoEnroles" [fullscreen]="false" text="Cargando enroles..."></app-loading-overlay>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Enroles</h5>
+              <span class="text-muted" *ngIf="cargandoEnroles">Cargando...</span>
+            </div>
+
+            <div *ngIf="enrolesMensaje && !cargandoEnroles" class="alert alert-info">
+              {{ enrolesMensaje }}
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Barco</th>
+                    <th>Fecha barco</th>
+                    <th>Fecha de alta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let enrol of enroles">
+                    <td>
+                      <button class="btn p-0 text-start fw-semibold text-dark text-decoration-none border-0 bg-transparent" (click)="goToBarcoDetalle(enrol)">
+                        {{ enrol.nombre || enrol.idBarco }}
+                      </button>
+                    </td>
+                    <td>{{ enrol.fecha ? (enrol.fecha | date: 'shortDate') : '-' }}</td>
+                    <td>{{ enrol.created_at ? (enrol.created_at | date: 'short') : '-' }}</td>
+                  </tr>
+                  <tr *ngIf="!cargandoEnroles && enroles.length === 0">
+                    <td colspan="3" class="text-muted">Sin enroles.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 order-1 order-md-2">
+      <div class="card panel-card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted">Secciones</h6>
+          <button class="btn w-100 mb-2"
+                  [class.btn-primary]="activeTab === 'datos'"
+                  [class.btn-outline-primary]="activeTab !== 'datos'"
+                  (click)="setTab('datos')">
+            Datos
+          </button>
+          <button class="btn w-100"
+                  [class.btn-primary]="activeTab === 'documentos'"
+                  [class.btn-outline-primary]="activeTab !== 'documentos'"
+                  (click)="setTab('documentos')">
+            Documentos
+          </button>
+          <button class="btn w-100 mt-2"
+                  [class.btn-primary]="activeTab === 'enroles'"
+                  [class.btn-outline-primary]="activeTab !== 'enroles'"
+                  (click)="setTab('enroles')">
+            Enroles
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

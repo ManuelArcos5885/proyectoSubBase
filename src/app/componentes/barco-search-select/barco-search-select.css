@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  position: relative;
+  z-index: 3000;
+}
+
+.dropdown-panel {
+  position: absolute;
+  z-index: 3100;
+  width: 100%;
+  margin-top: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.dropdown-item {
+  width: 100%;
+  border: 0;
+  background: #fff;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+.dropdown-item:hover {
+  background: #f8f9fa;
+}
+
+.dropdown-empty {
+  padding: 10px 12px;
+}
+

@@ -1,0 +1,98 @@
+<app-navbar></app-navbar>
+
+<main class="mapa-page">
+  <section class="card panel-card mb-3">
+    <div class="card-body">
+      <section class="controles">
+        <button
+          type="button"
+          class="btn-toggle"
+          [class.activo]="puertosVisibles"
+          [disabled]="cargandoPuertos"
+          (click)="togglePuertos()"
+        >
+          {{ cargandoPuertos ? 'Cargando puertos...' : 'Puertos' }}
+        </button>
+
+        <button
+          type="button"
+          class="btn-toggle"
+          [class.activo]="basesVisibles"
+          [disabled]="cargandoBases"
+          (click)="toggleBases()"
+        >
+          {{ cargandoBases ? 'Cargando bases...' : 'Bases' }}
+        </button>
+      </section>
+    </div>
+  </section>
+
+  @if (error) {
+    <p class="mensaje-error">{{ error }}</p>
+  }
+
+  <section class="card panel-card">
+    <div class="card-body">
+      <section id="mapa-puertos-bases" class="mapa" aria-label="Mapa de puertos y bases"></section>
+    </div>
+  </section>
+</main>
+
+@if (modalAbierto) {
+  <div class="modal-backdrop-custom"></div>
+  <div class="modal-custom" role="dialog" aria-modal="true" aria-label="Barcos del puerto">
+    <div class="modal-header-custom">
+      <h5 class="mb-0">{{ modalTitulo }}</h5>
+      <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      @if (puertoModal) {
+        <div class="mb-3">
+          <h6 class="mb-2">Puerto seleccionado</h6>
+          <p class="mb-1"><strong>Nombre:</strong> {{ puertoModal.nombre }}</p>
+          <p class="mb-1"><strong>Comunidad:</strong> {{ puertoModal.comunidad || '-' }}</p>
+          <p class="mb-1"><strong>Provincia:</strong> {{ puertoModal.provincia || '-' }}</p>
+          <p class="mb-1"><strong>Direccion:</strong> {{ puertoModal.direccion || '-' }}</p>
+          <p class="mb-0"><strong>Coordenadas:</strong> {{ puertoModal.lat }}, {{ puertoModal.lng }}</p>
+        </div>
+      }
+
+      @if (modalCargando) {
+        <p class="mb-0">Cargando barcos...</p>
+      } @else if (modalError) {
+        <p class="text-danger mb-0">{{ modalError }}</p>
+      } @else if (barcosModal.length === 0) {
+        <p class="mb-0">Este puerto no tiene barcos asignados.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Barco</th>
+                <th>Fecha</th>
+                <th>Alta</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (barco of barcosModal; track barco.idBarco) {
+                <tr>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn p-0 text-start fw-semibold text-dark text-decoration-none border-0 bg-transparent"
+                      (click)="abrirBarcoEnNuevaPestana(barco)"
+                    >
+                      {{ barco.nombre || barco.idBarco }}
+                    </button>
+                  </td>
+                  <td>{{ barco.fecha ? (barco.fecha | date: 'shortDate') : '-' }}</td>
+                  <td>{{ barco.created_at ? (barco.created_at | date: 'short') : '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+}

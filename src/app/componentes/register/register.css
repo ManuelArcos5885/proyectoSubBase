@@ -1,0 +1,54 @@
+.login-stack {
+  width: 100%;
+  max-width: 760px;
+}
+
+.brand-container {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 18px 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  margin-bottom: 16px;
+}
+
+.login-card {
+  width: 100%;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px 32px 28px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+@media (min-width: 992px) {
+  .login-stack {
+    max-width: 52vw;
+  }
+}
+
+.brand-title {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.brand-sub {
+  color: #f3c400;
+}
+
+.brand-base {
+  color: #0b2f4f;
+  font-size: 0.85em;
+}
+
+.login-title {
+  background: #196640;
+  color: #ffffff;
+  border-radius: 999px 999px 16px 16px;
+  padding: 14px 18px;
+  margin: -8px -8px 20px;
+}

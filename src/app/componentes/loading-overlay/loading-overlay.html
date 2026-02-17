@@ -1,0 +1,7 @@
+<div *ngIf="show" class="loading-overlay" [class.fullscreen]="fullscreen" aria-live="polite" aria-busy="true">
+  <div class="loading-card">
+    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+    <span>{{ text }}</span>
+  </div>
+</div>
+

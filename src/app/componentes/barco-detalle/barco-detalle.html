@@ -1,0 +1,213 @@
+<app-navbar></app-navbar>
+<div class="container my-4">
+  <div class="card panel-card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{ barcoNombre }}</h3>
+      <span class="text-muted" *ngIf="barco.idBarco">ID: {{ barco.idBarco }}</span>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-9 order-2 order-md-1">
+      <div class="card panel-card mb-3" *ngIf="activeTab === 'datos'">
+        <div class="card-body">
+          <h5 class="mb-3">Datos del barco</h5>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" [(ngModel)]="barco.nombre" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Fecha</label>
+            <input type="date" class="form-control" [(ngModel)]="barco.fecha" required>
+          </div>
+
+          <div *ngIf="mensaje" class="alert alert-info">
+            {{ mensaje }}
+          </div>
+
+          <button class="btn btn-primary w-100" (click)="save()">
+            {{ creando ? 'Crear barco' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'documentos'">
+        <div class="card panel-card mb-3">
+          <div class="card-body">
+            <h5 class="mb-3">Subida de documento PDF</h5>
+            <div class="mb-3">
+              <label class="form-label">Tipo de documento</label>
+              <select class="form-select" [(ngModel)]="documentoTipo">
+                <option value="CERTIFICADO_MEDICO_APTITUD_EMBARQUE">Certificado médico de aptitud para embarque</option>
+                <option value="CONTRATO_EMBARCO_O_RELACION_LABORAL">Contrato de embarco o relación laboral</option>
+                <option value="PASAPORTE_DNI_NIE">Pasaporte / DNI / NIE</option>
+                <option value="CERTIFICADOS_ESPECIALIDAD">Certificados de especialidad</option>
+                <option value="TITULO_PROFESIONAL_MARITIMO">Título profesional marítimo</option>
+                <option value="ROL_DESPACHO_DOTACION_MINIMA_SEGURIDAD">Rol de despacho y dotación mínima de seguridad</option>
+                <option value="LIBRETA_MARITIMA">Libreta marítima</option>
+                <option value="OTRO">Otros</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha de caducidad</label>
+              <input type="date" class="form-control" [(ngModel)]="fechaCaducidad">
+            </div>
+            <div class="mb-3">
+              <input type="file" class="form-control" accept="application/pdf" (change)="onFileSelected($event)">
+            </div>
+
+            <div *ngIf="documentoMensaje" class="alert alert-info">
+              {{ documentoMensaje }}
+            </div>
+
+            <button class="btn btn-outline-primary w-100" (click)="subirDocumento()" [disabled]="subiendo">
+              {{ subiendo ? 'Subiendo...' : 'Subir documento' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="card panel-card">
+          <div class="card-body position-relative">
+            <app-loading-overlay [show]="cargandoDocumentos" [fullscreen]="false" text="Cargando documentos..."></app-loading-overlay>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Documentos</h5>
+              <span class="text-muted" *ngIf="cargandoDocumentos">Cargando...</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Caducidad</th>
+                    <th>Fecha</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let doc of documentos">
+                    <td>
+                      <button class="btn btn-link p-0" (click)="descargarDocumento(doc)">
+                        {{ fileNameFromPath(doc.archivo_path) }}
+                      </button>
+                    </td>
+                    <td>{{ doc.tipo }}</td>
+                    <td>{{ doc.fecha_caducidad ? (doc.fecha_caducidad | date: 'shortDate') : '-' }}</td>
+                    <td>{{ doc.created_at ? (doc.created_at | date: 'short') : '-' }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-outline-danger btn-sm py-0 px-2 text-nowrap" (click)="quitarDocumento(doc)">
+                        Quitar
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!cargandoDocumentos && documentos.length === 0">
+                    <td colspan="5" class="text-muted">Sin documentos.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'tripulantes'">
+        <div class="card panel-card mb-3 tripulantes-panel">
+          <div class="card-body">
+            <h5 class="mb-3">Asignar tripulante</h5>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-9">
+                <label class="form-label">Tripulante</label>
+                <app-tripulante-search-select
+                  [tripulantes]="tripulantesDisponibles"
+                  [(selectedId)]="selectedTripulanteId">
+                </app-tripulante-search-select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-primary w-100" (click)="agregarTripulante()">
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="tripulantesMensaje" class="alert alert-info mt-3">
+              {{ tripulantesMensaje }}
+            </div>
+          </div>
+        </div>
+
+        <div class="card panel-card">
+          <div class="card-body position-relative">
+            <app-loading-overlay [show]="cargandoTripulantes" [fullscreen]="false" text="Cargando tripulantes..."></app-loading-overlay>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Tripulantes asignados</h5>
+              <span class="text-muted" *ngIf="cargandoTripulantes">Cargando...</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Puesto</th>
+                    <th>Telefono</th>
+                    <th>Alta</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let t of tripulantes">
+                    <td>
+                      <button class="btn p-0 text-start fw-semibold text-dark text-decoration-none border-0 bg-transparent" (click)="goToTripulanteDetalle(t)">
+                        {{ t.apellidos }} {{ t.nombre }}
+                      </button>
+                    </td>
+                    <td>{{ t.puesto || '-' }}</td>
+                    <td>{{ t.telefono || '-' }}</td>
+                    <td>{{ t.created_at ? (t.created_at | date: 'short') : '-' }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-outline-danger btn-sm" (click)="quitarTripulante(t)">
+                        Quitar
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!cargandoTripulantes && tripulantes.length === 0">
+                    <td colspan="5" class="text-muted">Sin tripulantes asignados.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 order-1 order-md-2">
+      <div class="card panel-card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted">Secciones</h6>
+          <button class="btn w-100 mb-2"
+                  [class.btn-primary]="activeTab === 'datos'"
+                  [class.btn-outline-primary]="activeTab !== 'datos'"
+                  (click)="setTab('datos')">
+            Datos
+          </button>
+          <button class="btn w-100"
+                  [class.btn-primary]="activeTab === 'documentos'"
+                  [class.btn-outline-primary]="activeTab !== 'documentos'"
+                  (click)="setTab('documentos')">
+            Documentos
+          </button>
+          <button class="btn w-100 mt-2"
+                  [class.btn-primary]="activeTab === 'tripulantes'"
+                  [class.btn-outline-primary]="activeTab !== 'tripulantes'"
+                  (click)="setTab('tripulantes')">
+            Tripulantes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

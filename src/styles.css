@@ -1,1 +1,12 @@
+@import 'leaflet/dist/leaflet.css';
+
 /* You can add global styles to this file, and also import other style files */
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: url('/imagenes/aguamarine.png') center center / cover no-repeat fixed;
+  background-color: #e6f7f6;
+}

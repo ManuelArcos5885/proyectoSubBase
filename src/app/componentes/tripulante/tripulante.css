@@ -1,0 +1,37 @@
+.panel-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.panel-body {
+  padding: 24px;
+}
+
+.alta-col {
+  min-height: 100%;
+}
+
+.alta-col-right {
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  padding-left: 24px;
+}
+
+@media (max-width: 991px) {
+  .alta-col-right {
+    border-left: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding-left: 12px;
+    padding-top: 20px;
+  }
+}
+
+.tripulante-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tripulante-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+}

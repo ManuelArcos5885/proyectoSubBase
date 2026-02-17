@@ -1,0 +1,99 @@
+<app-navbar></app-navbar>
+
+<div class="container my-4">
+  <div class="panel-card mb-3">
+    <div class="panel-body">
+      <h5 class="mb-3">Alta de tripulante</h5>
+      <div class="row g-4">
+        <div class="col-lg-6 alta-col">
+          <h6 class="text-uppercase text-muted mb-3">1) Crear usuario</h6>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" [(ngModel)]="cuentaForm.email" placeholder="usuario@dominio.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contrasena</label>
+            <input type="password" class="form-control" [(ngModel)]="cuentaForm.password">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Repetir contrasena</label>
+            <input type="password" class="form-control" [(ngModel)]="cuentaForm.repeatPassword">
+          </div>
+          <button class="btn btn-primary w-100" (click)="crearUsuarioBase()" [disabled]="creandoUsuario || guardandoTripulante">
+            {{ creandoUsuario ? 'Creando usuario...' : 'Crear usuario base' }}
+          </button>
+          <div class="small text-muted mt-2" *ngIf="nuevoUsuarioId">
+            Usuario creado: {{ nuevoUsuarioEmail }} (ID: {{ nuevoUsuarioId }})
+          </div>
+        </div>
+
+        <div class="col-lg-6 alta-col alta-col-right">
+          <h6 class="text-uppercase text-muted mb-3">2) Datos de tripulante</h6>
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" [(ngModel)]="tripulanteForm.nombre" [disabled]="!nuevoUsuarioId">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Apellidos</label>
+            <input class="form-control" [(ngModel)]="tripulanteForm.apellidos" [disabled]="!nuevoUsuarioId">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Telefono</label>
+            <input class="form-control" [(ngModel)]="tripulanteForm.telefono" [disabled]="!nuevoUsuarioId">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nacionalidad</label>
+            <input class="form-control" [(ngModel)]="tripulanteForm.nacionalidad" [disabled]="!nuevoUsuarioId">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Puesto</label>
+            <input class="form-control" [(ngModel)]="tripulanteForm.puesto" [disabled]="!nuevoUsuarioId">
+          </div>
+          <button class="btn btn-success w-100" (click)="guardarDatosTripulanteNuevo()" [disabled]="!nuevoUsuarioId || guardandoTripulante || creandoUsuario">
+            {{ guardandoTripulante ? 'Guardando ficha...' : 'Guardar ficha de tripulante' }}
+          </button>
+          <div class="small text-muted mt-2" *ngIf="!nuevoUsuarioId">
+            Primero debes crear el usuario.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-card mb-3">
+    <div class="panel-body d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Tripulantes</h3>
+      <span class="text-muted" *ngIf="cargando">Cargando...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+  <div *ngIf="mensaje" class="alert alert-success">
+    {{ mensaje }}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6 col-lg-4" *ngFor="let item of tripulantes">
+      <div class="panel-card h-100 tripulante-card" (click)="goDetalle(item)">
+        <div class="panel-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <h5 class="mb-1">{{ item.nombre }} {{ item.apellidos }}</h5>
+            <button class="btn btn-outline-danger btn-sm" (click)="eliminarTripulante(item, $event)">Eliminar</button>
+          </div>
+          <div class="text-muted mb-2">{{ item.puesto || 'Sin puesto' }}</div>
+          <div class="small">
+            <div><strong>Telefono:</strong> {{ item.telefono || '-' }}</div>
+            <div><strong>Nacionalidad:</strong> {{ item.nacionalidad || '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12" *ngIf="!cargando && tripulantes.length === 0">
+      <div class="panel-card">
+        <div class="panel-body text-muted">No hay tripulantes para mostrar.</div>
+      </div>
+    </div>
+  </div>
+</div>
