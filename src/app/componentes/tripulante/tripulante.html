@@ -1,7 +1,23 @@
 <app-navbar></app-navbar>
 
 <div class="container my-4">
-  <div class="panel-card mb-3">
+  <div class="d-flex justify-content-end mb-3">
+    <button
+      class="btn btn-primary"
+      *ngIf="!mostrandoAltaTripulante"
+      (click)="abrirAltaTripulante()">
+      Crear tripulante
+    </button>
+    <button
+      class="btn btn-outline-secondary"
+      *ngIf="mostrandoAltaTripulante"
+      (click)="cancelarAltaTripulante()"
+      [disabled]="creandoUsuario || guardandoTripulante">
+      Cancelar alta
+    </button>
+  </div>
+
+  <div class="panel-card mb-3" *ngIf="mostrandoAltaTripulante">
     <div class="panel-body">
       <h5 class="mb-3">Alta de tripulante</h5>
       <div class="row g-4">
@@ -60,29 +76,38 @@
     </div>
   </div>
 
-  <div class="panel-card mb-3">
+  <div class="panel-card mb-3" *ngIf="!mostrandoAltaTripulante">
     <div class="panel-body d-flex justify-content-between align-items-center">
       <h3 class="mb-0">Tripulantes</h3>
       <span class="text-muted" *ngIf="cargando">Cargando...</span>
     </div>
   </div>
 
-  <div *ngIf="error" class="alert alert-danger">
+  <div *ngIf="error && !mostrandoAltaTripulante" class="alert alert-danger">
     {{ error }}
   </div>
-  <div *ngIf="mensaje" class="alert alert-success">
+  <div *ngIf="avisoCaducidad && !mostrandoAltaTripulante" class="alert alert-warning">
+    {{ avisoCaducidad }}
+  </div>
+  <div *ngIf="mensaje && !mostrandoAltaTripulante" class="alert alert-success">
     {{ mensaje }}
   </div>
 
-  <div class="row g-3">
+  <div class="row g-3" *ngIf="!mostrandoAltaTripulante">
     <div class="col-md-6 col-lg-4" *ngFor="let item of tripulantes">
-      <div class="panel-card h-100 tripulante-card" (click)="goDetalle(item)">
+      <div
+        class="panel-card h-100 tripulante-card"
+        [class.tripulante-card-caducado]="tieneDocumentosCaducados(item.user_id)"
+        (click)="goDetalle(item)">
         <div class="panel-body">
           <div class="d-flex justify-content-between align-items-start">
             <h5 class="mb-1">{{ item.nombre }} {{ item.apellidos }}</h5>
             <button class="btn btn-outline-danger btn-sm" (click)="eliminarTripulante(item, $event)">Eliminar</button>
           </div>
           <div class="text-muted mb-2">{{ item.puesto || 'Sin puesto' }}</div>
+          <div *ngIf="tieneDocumentosCaducados(item.user_id)" class="small fw-semibold text-danger mb-2">
+            Tiene documentos caducados.
+          </div>
           <div class="small">
             <div><strong>Telefono:</strong> {{ item.telefono || '-' }}</div>
             <div><strong>Nacionalidad:</strong> {{ item.nacionalidad || '-' }}</div>

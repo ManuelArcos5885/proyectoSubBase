@@ -7,6 +7,7 @@ import { NavbarComponent } from '../navbar/navbar';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { Tripulante } from '../../models/tripulante';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 @Component({
   selector: 'app-tripulante',
@@ -17,9 +18,13 @@ import { Tripulante } from '../../models/tripulante';
 })
 export class TripulanteComponent implements OnInit {
   tripulantes: TripulanteResumen[] = [];
+  caducadosPorUserId: Record<string, boolean> = {};
+  avisoCaducidad = '';
+  alertaCaducidadMostrada = false;
   cargando = false;
   mensaje = '';
   error = '';
+  mostrandoAltaTripulante = false;
   creandoUsuario = false;
   guardandoTripulante = false;
   nuevoUsuarioId = '';
@@ -90,6 +95,19 @@ export class TripulanteComponent implements OnInit {
     });
   }
 
+  abrirAltaTripulante() {
+    this.mostrandoAltaTripulante = true;
+    this.mensaje = '';
+    this.error = '';
+  }
+
+  cancelarAltaTripulante() {
+    this.resetCrearTripulanteForm();
+    this.mostrandoAltaTripulante = false;
+    this.mensaje = '';
+    this.error = '';
+  }
+
   guardarDatosTripulanteNuevo() {
     this.mensaje = '';
     this.error = '';
@@ -124,6 +142,7 @@ export class TripulanteComponent implements OnInit {
             this.guardandoTripulante = false;
             this.cargarTripulantes();
             this.resetCrearTripulanteForm();
+            this.mostrandoAltaTripulante = false;
             this.cdr.detectChanges();
           },
           error: (err) => {
@@ -149,6 +168,10 @@ export class TripulanteComponent implements OnInit {
     });
   }
 
+  tieneDocumentosCaducados(userId: string) {
+    return !!this.caducadosPorUserId[userId];
+  }
+
   eliminarTripulante(item: TripulanteResumen, event: Event) {
     event.stopPropagation();
     this.mensaje = '';
@@ -162,6 +185,8 @@ export class TripulanteComponent implements OnInit {
     this.tripulanteService.deleteById(item.user_id).subscribe({
       next: () => {
         this.tripulantes = this.tripulantes.filter((t) => t.user_id !== item.user_id);
+        delete this.caducadosPorUserId[item.user_id];
+        this.actualizarAvisoCaducidad();
         this.mensaje = 'Tripulante eliminado correctamente.';
         this.cdr.detectChanges();
       },
@@ -178,11 +203,15 @@ export class TripulanteComponent implements OnInit {
     this.tripulanteService.getTripulantes().subscribe({
       next: (data) => {
         this.tripulantes = data?.tripulantes ?? [];
+        this.caducadosPorUserId = {};
         this.cargando = false;
+        this.revisarCaducidadDocumentos();
         this.cdr.detectChanges();
       },
       error: () => {
         this.error = 'No se pudo cargar el listado.';
+        this.avisoCaducidad = '';
+        this.caducadosPorUserId = {};
         this.cargando = false;
         this.cdr.detectChanges();
       }
@@ -236,5 +265,77 @@ export class TripulanteComponent implements OnInit {
       nacionalidad: '',
       puesto: ''
     };
+  }
+
+  private revisarCaducidadDocumentos() {
+    if (!this.tripulantes.length) {
+      this.avisoCaducidad = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const consultas = this.tripulantes.map((item) =>
+      this.tripulanteService.getDocumentosByUserId(item.user_id).pipe(
+        map((res) => {
+          const documentos = res?.documentos ?? [];
+          const tieneCaducados = documentos.some((doc: any) =>
+            this.esDocumentoCaducado(doc?.fecha_caducidad)
+          );
+          return { userId: item.user_id, tieneCaducados };
+        }),
+        catchError(() => of({ userId: item.user_id, tieneCaducados: false }))
+      )
+    );
+
+    forkJoin(consultas).subscribe({
+      next: (resultados) => {
+        const mapa: Record<string, boolean> = {};
+        resultados.forEach((r) => {
+          mapa[r.userId] = r.tieneCaducados;
+        });
+
+        this.caducadosPorUserId = mapa;
+        const totalCaducados = Object.values(mapa).filter(Boolean).length;
+        const mostrarAlerta = !this.alertaCaducidadMostrada;
+        this.actualizarAvisoCaducidad();
+        this.alertaCaducidadMostrada = true;
+        if (totalCaducados > 0 && mostrarAlerta) {
+          window.alert(
+            `Aviso: hay ${totalCaducados} tripulante(s) con documentos caducados.`
+          );
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.avisoCaducidad = '';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private actualizarAvisoCaducidad() {
+    const totalCaducados = Object.values(this.caducadosPorUserId).filter(Boolean).length;
+    if (totalCaducados > 0) {
+      this.avisoCaducidad = `Hay ${totalCaducados} tripulante(s) con documentos caducados.`;
+      return;
+    }
+    this.avisoCaducidad = '';
+  }
+
+  private esDocumentoCaducado(fechaCaducidad?: string) {
+    const raw = String(fechaCaducidad ?? '').trim();
+    if (!raw) {
+      return false;
+    }
+
+    const fecha = new Date(raw);
+    if (Number.isNaN(fecha.getTime())) {
+      return false;
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fecha.setHours(0, 0, 0, 0);
+    return fecha < hoy;
   }
 }
