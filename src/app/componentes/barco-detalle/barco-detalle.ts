@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar';
 import { StorageService } from '../../services/storage.service';
 import { BarcoService } from '../../services/barco.service';
-import { catchError, finalize, switchMap } from 'rxjs';
+import { catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 import { Barco } from '../../models/barco';
 import { TripulanteService, TripulanteResumen } from '../../services/tripulante.service';
 import { TripulanteSearchSelectComponent } from '../tripulante-search-select/tripulante-search-select';
@@ -19,6 +19,7 @@ import { LoadingOverlayComponent } from '../loading-overlay/loading-overlay';
   styleUrl: './barco-detalle.css',
 })
 export class BarcoDetalleComponent implements OnInit {
+  private readonly FECHA_SIN_CADUCIDAD = '2999-12-31';
   activeTab: 'datos' | 'documentos' | 'tripulantes' = 'datos';
   barcoNombre = 'Barco';
   barco: Barco = this.emptyBarco();
@@ -35,9 +36,17 @@ export class BarcoDetalleComponent implements OnInit {
     | 'OTRO' = 'CERTIFICADO_MEDICO_APTITUD_EMBARQUE';
   fechaCaducidad = '';
   tripulantesMensaje = '';
+  barcoNoPuedeZarpar = false;
+  avisoZarpe = '';
+  tieneDocumentosBarcoCaducados = false;
+  tripulantesCaducadosCount = 0;
+  caducadosPorTripulanteId: Record<string, boolean> = {};
   selectedFile: File | null = null;
   subiendo = false;
   documentos: DocumentoItem[] = [];
+  editandoCaducidadPath = '';
+  nuevaFechaCaducidad = '';
+  guardandoCaducidad = false;
   tripulantes: TripulanteBarcoItem[] = [];
   tripulantesDisponibles: TripulanteResumen[] = [];
   todosTripulantes: TripulanteResumen[] = [];
@@ -68,8 +77,12 @@ export class BarcoDetalleComponent implements OnInit {
         ...stateBarco
       };
       this.barcoNombre = this.barco.nombre || 'Barco';
+      if (this.targetBarcoId) {
+        this.validarCaducidadDocumentosBarco(this.targetBarcoId);
+      }
     } else if (this.targetBarcoId) {
       this.cargarBarcoPorId(this.targetBarcoId);
+      this.validarCaducidadDocumentosBarco(this.targetBarcoId);
     }
   }
 
@@ -147,11 +160,6 @@ export class BarcoDetalleComponent implements OnInit {
       this.documentoMensaje = 'Selecciona el tipo de documento.';
       return;
     }
-    if (!this.fechaCaducidad) {
-      this.documentoMensaje = 'Selecciona la fecha de caducidad.';
-      return;
-    }
-
     if (!this.targetBarcoId) {
       this.documentoMensaje = 'No se pudo identificar el barco.';
       return;
@@ -170,7 +178,7 @@ export class BarcoDetalleComponent implements OnInit {
           this.barcoService.createDocumento(this.targetBarcoId, {
             tipo: this.documentoTipo,
             archivo_path: path,
-            fecha_caducidad: this.fechaCaducidad
+            fecha_caducidad: this.normalizeFechaCaducidad(this.fechaCaducidad)
           })
         ),
         finalize(() => {
@@ -239,6 +247,61 @@ export class BarcoDetalleComponent implements OnInit {
     });
   }
 
+  editarCaducidad(documento: DocumentoItem) {
+    if (!documento?.archivo_path) {
+      return;
+    }
+
+    this.documentoMensaje = '';
+    this.editandoCaducidadPath = documento.archivo_path;
+    this.nuevaFechaCaducidad = this.dateOnly(documento.fecha_caducidad);
+  }
+
+  cancelarEdicionCaducidad() {
+    if (this.guardandoCaducidad) {
+      return;
+    }
+
+    this.editandoCaducidadPath = '';
+    this.nuevaFechaCaducidad = '';
+  }
+
+  guardarCaducidad(documento: DocumentoItem) {
+    this.documentoMensaje = '';
+
+    if (!this.targetBarcoId) {
+      this.documentoMensaje = 'No se pudo identificar el barco.';
+      return;
+    }
+    if (!documento?.archivo_path) {
+      this.documentoMensaje = 'No se pudo identificar el documento.';
+      return;
+    }
+    this.guardandoCaducidad = true;
+    const fechaCaducidad = this.normalizeFechaCaducidad(this.nuevaFechaCaducidad);
+    this.barcoService.updateDocumentoCaducidad(
+      this.targetBarcoId,
+      documento.archivo_path,
+      documento.tipo,
+      fechaCaducidad
+    ).pipe(
+      finalize(() => {
+        this.guardandoCaducidad = false;
+      })
+    ).subscribe({
+      next: () => {
+        this.documentoMensaje = 'Fecha de caducidad actualizada.';
+        window.alert('Fecha de caducidad guardada correctamente.');
+        this.editandoCaducidadPath = '';
+        this.nuevaFechaCaducidad = '';
+        this.cargarDocumentosPorId(this.targetBarcoId);
+      },
+      error: (err) => {
+        this.documentoMensaje = this.extractBackendError(err) || 'No se pudo actualizar la fecha de caducidad.';
+      }
+    });
+  }
+
   agregarTripulante() {
     this.tripulantesMensaje = '';
     if (!this.targetBarcoId) {
@@ -250,16 +313,36 @@ export class BarcoDetalleComponent implements OnInit {
       return;
     }
 
-    this.barcoService.addTripulanteToBarco(this.targetBarcoId, {
-      idTripulante: this.selectedTripulanteId
-    }).subscribe({
-      next: () => {
-        this.tripulantesMensaje = 'Tripulante agregado.';
-        this.selectedTripulanteId = '';
-        this.cargarTripulantesPorBarco(this.targetBarcoId);
+    this.tripulanteService.getDocumentosByUserId(this.selectedTripulanteId).subscribe({
+      next: (res) => {
+        const documentos = res?.documentos ?? [];
+        const tieneCaducados = documentos.some((doc: any) =>
+          this.esDocumentoCaducado(doc?.fecha_caducidad)
+        );
+
+        if (tieneCaducados) {
+          this.tripulantesMensaje = 'No se puede agregar: el tripulante tiene documentos caducados.';
+          window.alert('No se puede agregar el tripulante al barco porque tiene documentos caducados.');
+          this.cdr.detectChanges();
+          return;
+        }
+
+        this.barcoService.addTripulanteToBarco(this.targetBarcoId, {
+          idTripulante: this.selectedTripulanteId
+        }).subscribe({
+          next: () => {
+            this.tripulantesMensaje = 'Tripulante agregado.';
+            this.selectedTripulanteId = '';
+            this.cargarTripulantesPorBarco(this.targetBarcoId);
+          },
+          error: () => {
+            this.tripulantesMensaje = 'No se pudo agregar el tripulante.';
+          }
+        });
       },
       error: () => {
-        this.tripulantesMensaje = 'No se pudo agregar el tripulante.';
+        this.tripulantesMensaje = 'No se pudieron validar los documentos del tripulante.';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -307,6 +390,25 @@ export class BarcoDetalleComponent implements OnInit {
   fileNameFromPath(path: string) {
     const parts = path.split('/');
     return parts[parts.length - 1] || 'documento.pdf';
+  }
+
+  tieneDocumentosCaducadosTripulante(idTripulante: string) {
+    return !!this.caducadosPorTripulanteId[idTripulante];
+  }
+
+  caducidadLabel(value?: string) {
+    const normalized = this.dateOnly(value);
+    if (!normalized) {
+      return 'Sin caducidad';
+    }
+    const fecha = new Date(normalized);
+    return Number.isNaN(fecha.getTime())
+      ? normalized
+      : new Intl.DateTimeFormat('es-ES').format(fecha);
+  }
+
+  documentoCaducado(documento: DocumentoItem) {
+    return this.esDocumentoCaducado(documento?.fecha_caducidad);
   }
   private showSuccess(text: string) {
     this.mensaje = text;
@@ -357,6 +459,10 @@ export class BarcoDetalleComponent implements OnInit {
 
   private finishDocumentos(items: DocumentoItem[]) {
     this.documentos = items;
+    this.tieneDocumentosBarcoCaducados = items.some((doc) =>
+      this.esDocumentoCaducado(doc?.fecha_caducidad)
+    );
+    this.actualizarAvisoZarpe();
     this.cargandoDocumentos = false;
     this.cdr.detectChanges();
   }
@@ -372,6 +478,7 @@ export class BarcoDetalleComponent implements OnInit {
     this.barcoService.getTripulantesByBarcoId(barcoId).subscribe({
       next: (res) => {
         this.tripulantes = res?.tripulantes ?? [];
+        this.revisarCaducidadTripulantes();
         this.cargandoTripulantes = false;
         this.actualizarDisponibles();
         this.cdr.detectChanges();
@@ -405,8 +512,113 @@ export class BarcoDetalleComponent implements OnInit {
     );
   }
 
+  private revisarCaducidadTripulantes() {
+    if (!this.tripulantes.length) {
+      this.caducadosPorTripulanteId = {};
+      this.tripulantesCaducadosCount = 0;
+      this.actualizarAvisoZarpe();
+      return;
+    }
+
+    const consultas = this.tripulantes.map((item) =>
+      this.tripulanteService.getDocumentosByUserId(item.idTripulante).pipe(
+        map((res) => {
+          const documentos = res?.documentos ?? [];
+          const tieneCaducados = documentos.some((doc: any) =>
+            this.esDocumentoCaducado(doc?.fecha_caducidad)
+          );
+          return { userId: item.idTripulante, tieneCaducados };
+        }),
+        catchError(() => of({ userId: item.idTripulante, tieneCaducados: false }))
+      )
+    );
+
+    forkJoin(consultas).subscribe({
+      next: (resultados) => {
+        const mapa: Record<string, boolean> = {};
+        resultados.forEach((r) => {
+          mapa[r.userId] = r.tieneCaducados;
+        });
+        this.caducadosPorTripulanteId = mapa;
+        this.tripulantesCaducadosCount = Object.values(mapa).filter(Boolean).length;
+        this.actualizarAvisoZarpe();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.caducadosPorTripulanteId = {};
+        this.tripulantesCaducadosCount = 0;
+        this.actualizarAvisoZarpe();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private validarCaducidadDocumentosBarco(barcoId: string) {
+    this.barcoService.getDocumentosByBarcoId(barcoId).subscribe({
+      next: (res) => {
+        const docs = res?.documentos ?? [];
+        this.tieneDocumentosBarcoCaducados = docs.some((doc: any) =>
+          this.esDocumentoCaducado(doc?.fecha_caducidad)
+        );
+        this.actualizarAvisoZarpe();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.tieneDocumentosBarcoCaducados = false;
+        this.actualizarAvisoZarpe();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private actualizarAvisoZarpe() {
+    const motivos: string[] = [];
+    if (this.tieneDocumentosBarcoCaducados) {
+      motivos.push('documentos del barco caducados');
+    }
+    if (this.tripulantesCaducadosCount > 0) {
+      motivos.push(`${this.tripulantesCaducadosCount} tripulante(s) con documentos caducados`);
+    }
+
+    this.barcoNoPuedeZarpar = motivos.length > 0;
+    this.avisoZarpe = this.barcoNoPuedeZarpar
+      ? `Este barco no puede zarpar al mar: ${motivos.join(' y ')}.`
+      : '';
+  }
+
   private sanitizeFileName(name: string) {
     return name.replace(/\\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+  }
+
+  private dateOnly(value?: string) {
+    const raw = String(value ?? '').trim();
+    if (!raw) {
+      return '';
+    }
+    const normalized = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+    return normalized === this.FECHA_SIN_CADUCIDAD ? '' : normalized;
+  }
+
+  private esDocumentoCaducado(fechaCaducidad?: string) {
+    const raw = this.dateOnly(fechaCaducidad);
+    if (!raw) {
+      return false;
+    }
+
+    const fecha = new Date(raw);
+    if (Number.isNaN(fecha.getTime())) {
+      return false;
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fecha.setHours(0, 0, 0, 0);
+    return fecha < hoy;
+  }
+
+  private normalizeFechaCaducidad(value?: string) {
+    const raw = String(value ?? '').trim();
+    return raw || this.FECHA_SIN_CADUCIDAD;
   }
 
   private extractBackendError(err: any) {

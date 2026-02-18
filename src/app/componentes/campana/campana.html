@@ -26,6 +26,12 @@
             <h5 class="mb-1">{{ item.nombre }}</h5>
             <button class="btn btn-outline-danger btn-sm" (click)="eliminarCampana(item, $event)">Eliminar</button>
           </div>
+          <div class="small mt-2">
+            <div><strong>Barco:</strong> {{ item.idBarco || '-' }}</div>
+            <div><strong>Desde:</strong> {{ fechaLabel(item.fechaDesde) }}</div>
+            <div><strong>Hasta:</strong> {{ fechaLabel(item.fechaHasta) }}</div>
+            <div><strong>Motivo:</strong> {{ item.motivo || '-' }}</div>
+          </div>
         </div>
       </div>
     </div>

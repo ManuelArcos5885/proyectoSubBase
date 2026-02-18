@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Tripulante } from '../models/tripulante';
+import { catchError, switchMap, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -90,6 +91,64 @@ export class TripulanteService {
     });
   }
 
+  updateDocumentoCaducidad(archivoPath: string, tipo: string, fechaCaducidad: string) {
+    const params = new HttpParams().set('archivo_path', archivoPath);
+    return this.http.put(
+      `${this.API}/tripulante/documentos`,
+      { fecha_caducidad: fechaCaducidad },
+      {
+        headers: this.authHeaders(),
+        params
+      }
+    ).pipe(
+      catchError((err) => {
+        const status = Number(err?.status ?? 0);
+        if (status !== 404 && status !== 405) {
+          return throwError(() => err);
+        }
+
+        return this.removeDocumento(archivoPath).pipe(
+          switchMap(() =>
+            this.createDocumento({
+              tipo,
+              archivo_path: archivoPath,
+              fecha_caducidad: fechaCaducidad
+            })
+          )
+        );
+      })
+    );
+  }
+
+  updateDocumentoCaducidadByUserId(userId: string, archivoPath: string, tipo: string, fechaCaducidad: string) {
+    const params = new HttpParams().set('archivo_path', archivoPath);
+    return this.http.put(
+      `${this.API}/tripulante/${userId}/documentos`,
+      { fecha_caducidad: fechaCaducidad },
+      {
+        headers: this.authHeaders(),
+        params
+      }
+    ).pipe(
+      catchError((err) => {
+        const status = Number(err?.status ?? 0);
+        if (status !== 404 && status !== 405) {
+          return throwError(() => err);
+        }
+
+        return this.removeDocumentoByUserId(userId, archivoPath).pipe(
+          switchMap(() =>
+            this.createDocumentoByUserId(userId, {
+              tipo,
+              archivo_path: archivoPath,
+              fecha_caducidad: fechaCaducidad
+            })
+          )
+        );
+      })
+    );
+  }
+
   getDocumentos() {
     return this.http.get<{ documentos: any[] }>(`${this.API}/tripulante/documentos`, {
       headers: this.authHeaders()
@@ -104,6 +163,7 @@ export class TripulanteService {
 
 export interface TripulanteResumen {
   user_id: string;
+  email?: string;
   nombre: string;
   apellidos: string;
   telefono: string;

@@ -24,6 +24,10 @@ export class BarcoSearchSelectComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['barcos']) {
+      const selected = this.barcos.find((b) => b.idBarco === this.selectedId);
+      if (selected) {
+        this.query = this.label(selected);
+      }
       this.applyFilter();
     }
     if (changes['selectedId']) {

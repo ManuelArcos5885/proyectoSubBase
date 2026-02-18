@@ -18,9 +18,9 @@ import { catchError, forkJoin, map, of } from 'rxjs';
 })
 export class TripulanteComponent implements OnInit {
   tripulantes: TripulanteResumen[] = [];
+  emailsPorUserId: Record<string, string> = {};
   caducadosPorUserId: Record<string, boolean> = {};
   avisoCaducidad = '';
-  alertaCaducidadMostrada = false;
   cargando = false;
   mensaje = '';
   error = '';
@@ -172,6 +172,11 @@ export class TripulanteComponent implements OnInit {
     return !!this.caducadosPorUserId[userId];
   }
 
+  usuarioRelacionadoLabel(item: TripulanteResumen) {
+    const email = String(this.emailsPorUserId[item.user_id] ?? '').trim();
+    return email || 'Sin email';
+  }
+
   eliminarTripulante(item: TripulanteResumen, event: Event) {
     event.stopPropagation();
     this.mensaje = '';
@@ -203,6 +208,7 @@ export class TripulanteComponent implements OnInit {
     this.tripulanteService.getTripulantes().subscribe({
       next: (data) => {
         this.tripulantes = data?.tripulantes ?? [];
+        this.cargarEmailsUsuarios();
         this.caducadosPorUserId = {};
         this.cargando = false;
         this.revisarCaducidadDocumentos();
@@ -296,18 +302,33 @@ export class TripulanteComponent implements OnInit {
 
         this.caducadosPorUserId = mapa;
         const totalCaducados = Object.values(mapa).filter(Boolean).length;
-        const mostrarAlerta = !this.alertaCaducidadMostrada;
         this.actualizarAvisoCaducidad();
-        this.alertaCaducidadMostrada = true;
-        if (totalCaducados > 0 && mostrarAlerta) {
-          window.alert(
-            `Aviso: hay ${totalCaducados} tripulante(s) con documentos caducados.`
-          );
-        }
         this.cdr.detectChanges();
       },
       error: () => {
         this.avisoCaducidad = '';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private cargarEmailsUsuarios() {
+    this.userService.getUsers().subscribe({
+      next: (data) => {
+        const users = data?.users ?? [];
+        const mapa: Record<string, string> = {};
+        users.forEach((u: any) => {
+          const id = String(u?.id ?? '').trim();
+          const email = String(u?.email ?? '').trim();
+          if (id) {
+            mapa[id] = email;
+          }
+        });
+        this.emailsPorUserId = mapa;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.emailsPorUserId = {};
         this.cdr.detectChanges();
       }
     });

@@ -2,8 +2,15 @@
 <div class="container my-4">
   <div class="card panel-card mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">
-      <h3 class="mb-0">{{ tripulanteNombre }}</h3>
+      <div>
+        <h3 class="mb-0">{{ tripulanteNombre }}</h3>
+        <div class="small text-muted" *ngIf="relatedUserEmail">{{ relatedUserEmail }}</div>
+      </div>
     </div>
+  </div>
+
+  <div *ngIf="avisoCaducidad" class="alert alert-warning">
+    {{ avisoCaducidad }}
   </div>
 
   <div class="row g-3">
@@ -106,9 +113,44 @@
                       </button>
                     </td>
                     <td>{{ doc.tipo }}</td>
-                    <td>{{ doc.fecha_caducidad ? (doc.fecha_caducidad | date: 'shortDate') : '-' }}</td>
+                    <td>
+                      <ng-container *ngIf="editandoCaducidadPath !== doc.archivo_path; else editCaducidadTpl">
+                        {{ caducidadLabel(doc.fecha_caducidad) }}
+                        <div *ngIf="documentoCaducado(doc)" class="small fw-semibold text-danger">
+                          Fecha caducada
+                        </div>
+                      </ng-container>
+                      <ng-template #editCaducidadTpl>
+                        <input
+                          type="date"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="nuevaFechaCaducidad"
+                          [disabled]="guardandoCaducidad">
+                      </ng-template>
+                    </td>
                     <td>{{ doc.created_at ? (doc.created_at | date: 'short') : '-' }}</td>
                     <td class="text-end">
+                      <button
+                        *ngIf="editandoCaducidadPath !== doc.archivo_path"
+                        class="btn btn-outline-secondary btn-sm py-0 px-2 text-nowrap me-2"
+                        (click)="editarCaducidad(doc)"
+                        [disabled]="!canEdit">
+                        Editar fecha
+                      </button>
+                      <button
+                        *ngIf="editandoCaducidadPath === doc.archivo_path"
+                        class="btn btn-outline-primary btn-sm py-0 px-2 text-nowrap me-2"
+                        (click)="guardarCaducidad(doc)"
+                        [disabled]="guardandoCaducidad || !canEdit">
+                        Guardar fecha
+                      </button>
+                      <button
+                        *ngIf="editandoCaducidadPath === doc.archivo_path"
+                        class="btn btn-outline-secondary btn-sm py-0 px-2 text-nowrap me-2"
+                        (click)="cancelarEdicionCaducidad()"
+                        [disabled]="guardandoCaducidad">
+                        Cancelar
+                      </button>
                       <button class="btn btn-outline-danger btn-sm py-0 px-2 text-nowrap" (click)="quitarDocumento(doc)" [disabled]="!canEdit">
                         Quitar
                       </button>

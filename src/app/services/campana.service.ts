@@ -32,13 +32,13 @@ export class CampanaService {
     });
   }
 
-  create(data: Campana) {
+  create(data: Campana | any) {
     return this.http.post(`${this.API}/campana`, data, {
       headers: this.authHeaders()
     });
   }
 
-  updateById(idCampana: string, data: Campana) {
+  updateById(idCampana: string, data: Campana | any) {
     return this.http.put(`${this.API}/campana/${idCampana}`, data, {
       headers: this.authHeaders()
     });
@@ -58,5 +58,10 @@ export class CampanaService {
 
 export interface CampanaResumen {
   idCampana: string;
+  idCampanas?: string;
   nombre: string;
+  idBarco?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  motivo?: string;
 }

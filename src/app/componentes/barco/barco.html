@@ -14,6 +14,9 @@
   <div *ngIf="error" class="alert alert-danger">
     {{ error }}
   </div>
+  <div *ngIf="avisoCaducidad" class="alert alert-warning">
+    {{ avisoCaducidad }}
+  </div>
   <div *ngIf="mensaje" class="alert alert-success">
     {{ mensaje }}
   </div>
@@ -27,6 +30,9 @@
             <button class="btn btn-outline-danger btn-sm" (click)="eliminarBarco(item, $event)">Eliminar</button>
           </div>
           <div class="text-muted mb-2">ID: {{ item.idBarco }}</div>
+          <div *ngIf="tieneDocumentosCaducados(item.idBarco)" class="small fw-semibold text-danger mb-2">
+            Tiene documentos caducados.
+          </div>
           <div class="small">
             <div><strong>Fecha:</strong> {{ item.fecha || '-' }}</div>
             <div><strong>Tripulantes:</strong> {{ item.tripulantesCount }}</div>

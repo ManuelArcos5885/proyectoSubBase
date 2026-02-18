@@ -16,12 +16,11 @@
           <label class="form-label">Email</label>
           <input class="form-control" [(ngModel)]="user.email">
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-4 mb-3" *ngIf="isAdmin">
           <label class="form-label">Rol</label>
           <select class="form-select" [(ngModel)]="user.role">
             <option value="TRIPULANTE">TRIPULANTE</option>
             <option value="ADMIN">ADMIN</option>
-            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
           </select>
         </div>
       </div>

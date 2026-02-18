@@ -10,6 +10,7 @@ import { Tripulante } from '../../models/tripulante';
 import { catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 import { BarcoService } from '../../services/barco.service';
 import { LoadingOverlayComponent } from '../loading-overlay/loading-overlay';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-tripulante-detalle',
@@ -19,8 +20,10 @@ import { LoadingOverlayComponent } from '../loading-overlay/loading-overlay';
   styleUrl: './tripulante-detalle.css',
 })
 export class TripulanteDetalleComponent implements OnInit {
+  private readonly FECHA_SIN_CADUCIDAD = '2999-12-31';
   activeTab: 'datos' | 'documentos' | 'enroles' = 'datos';
   tripulanteNombre = 'Mi ficha';
+  relatedUserEmail = '';
   userEmail = '';
   userId = '';
   targetUserId = '';
@@ -41,6 +44,11 @@ export class TripulanteDetalleComponent implements OnInit {
   subiendo = false;
   documentos: DocumentoItem[] = [];
   cargandoDocumentos = false;
+  tieneDocumentosCaducados = false;
+  avisoCaducidad = '';
+  editandoCaducidadPath = '';
+  nuevaFechaCaducidad = '';
+  guardandoCaducidad = false;
   enroles: EnrolBarcoItem[] = [];
   cargandoEnroles = false;
   enrolesMensaje = '';
@@ -48,6 +56,7 @@ export class TripulanteDetalleComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private tripulanteService: TripulanteService,
+    private userService: UserService,
     private barcoService: BarcoService,
     private storage: StorageService,
     private cdr: ChangeDetectorRef,
@@ -62,6 +71,8 @@ export class TripulanteDetalleComponent implements OnInit {
     const stateTripulante = this.router.getCurrentNavigation()?.extras.state?.['tripulante'] ?? history.state?.tripulante;
     this.targetUserId = paramId || stateTripulante?.user_id || currentUserId;
     this.canEdit = !paramId || this.targetUserId === currentUserId;
+    this.relatedUserEmail = this.userEmail;
+    this.cargarEmailRelacionado(this.targetUserId);
 
     this.tripulanteService.getUserMe().subscribe({
       next: (res) => {
@@ -83,10 +94,12 @@ export class TripulanteDetalleComponent implements OnInit {
       } else {
         this.cargarFichaPorId(this.targetUserId);
       }
+      this.validarCaducidadDocumentos(this.targetUserId);
       return;
     }
 
     this.cargarFicha();
+    this.validarCaducidadDocumentos();
   }
 
   setTab(tab: 'datos' | 'documentos' | 'enroles') {
@@ -156,11 +169,6 @@ export class TripulanteDetalleComponent implements OnInit {
       this.documentoMensaje = 'Selecciona el tipo de documento.';
       return;
     }
-    if (!this.fechaCaducidad) {
-      this.documentoMensaje = 'Selecciona la fecha de caducidad.';
-      return;
-    }
-
     const userId = this.userId || this.auth.getUserIdFromToken();
     if (!userId) {
       this.documentoMensaje = 'No se pudo identificar el usuario.';
@@ -175,12 +183,12 @@ export class TripulanteDetalleComponent implements OnInit {
       ? this.tripulanteService.createDocumentoByUserId(this.targetUserId, {
           tipo: this.documentoTipo,
           archivo_path: path,
-          fecha_caducidad: this.fechaCaducidad
+          fecha_caducidad: this.normalizeFechaCaducidad(this.fechaCaducidad)
         })
       : this.tripulanteService.createDocumento({
           tipo: this.documentoTipo,
           archivo_path: path,
-          fecha_caducidad: this.fechaCaducidad
+          fecha_caducidad: this.normalizeFechaCaducidad(this.fechaCaducidad)
         });
 
     this.storage
@@ -251,9 +259,85 @@ export class TripulanteDetalleComponent implements OnInit {
     });
   }
 
+  editarCaducidad(documento: DocumentoItem) {
+    if (!this.canEdit || !documento?.archivo_path) {
+      return;
+    }
+
+    this.documentoMensaje = '';
+    this.editandoCaducidadPath = documento.archivo_path;
+    this.nuevaFechaCaducidad = this.dateOnly(documento.fecha_caducidad);
+  }
+
+  cancelarEdicionCaducidad() {
+    if (this.guardandoCaducidad) {
+      return;
+    }
+
+    this.editandoCaducidadPath = '';
+    this.nuevaFechaCaducidad = '';
+  }
+
+  guardarCaducidad(documento: DocumentoItem) {
+    if (!this.canEdit) {
+      this.documentoMensaje = 'No tienes permisos para editar documentos.';
+      return;
+    }
+    if (!documento?.archivo_path) {
+      this.documentoMensaje = 'No se pudo identificar el documento.';
+      return;
+    }
+    this.guardandoCaducidad = true;
+    const fechaCaducidad = this.normalizeFechaCaducidad(this.nuevaFechaCaducidad);
+    const action = this.isAdmin && this.targetUserId
+      ? this.tripulanteService.updateDocumentoCaducidadByUserId(
+          this.targetUserId,
+          documento.archivo_path,
+          documento.tipo,
+          fechaCaducidad
+        )
+      : this.tripulanteService.updateDocumentoCaducidad(
+          documento.archivo_path,
+          documento.tipo,
+          fechaCaducidad
+        );
+
+    action.pipe(
+      finalize(() => {
+        this.guardandoCaducidad = false;
+      })
+    ).subscribe({
+      next: () => {
+        this.documentoMensaje = 'Fecha de caducidad actualizada.';
+        window.alert('Fecha de caducidad guardada correctamente.');
+        this.editandoCaducidadPath = '';
+        this.nuevaFechaCaducidad = '';
+        this.recargarDocumentosActuales();
+      },
+      error: () => {
+        this.documentoMensaje = 'No se pudo actualizar la fecha de caducidad.';
+      }
+    });
+  }
+
   fileNameFromPath(path: string) {
     const parts = path.split('/');
     return parts[parts.length - 1] || 'documento.pdf';
+  }
+
+  caducidadLabel(value?: string) {
+    const normalized = this.dateOnly(value);
+    if (!normalized) {
+      return 'Sin caducidad';
+    }
+    const fecha = new Date(normalized);
+    return Number.isNaN(fecha.getTime())
+      ? normalized
+      : new Intl.DateTimeFormat('es-ES').format(fecha);
+  }
+
+  documentoCaducado(documento: DocumentoItem) {
+    return this.esDocumentoCaducado(documento?.fecha_caducidad);
   }
   private showSuccess(text: string) {
     this.mensaje = text;
@@ -335,6 +419,26 @@ export class TripulanteDetalleComponent implements OnInit {
     });
   }
 
+  private cargarEmailRelacionado(userId: string) {
+    const targetId = String(userId ?? '').trim();
+    if (!targetId) {
+      this.relatedUserEmail = this.userEmail;
+      return;
+    }
+
+    this.userService.getById(targetId).subscribe({
+      next: (res) => {
+        const email = String(res?.user?.email ?? '').trim();
+        this.relatedUserEmail = email || this.userEmail;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.relatedUserEmail = this.userEmail;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   private cargarDocumentosPorId(userId: string) {
     this.cargandoDocumentos = true;
     this.tripulanteService.getDocumentosByUserId(userId).subscribe({
@@ -349,6 +453,7 @@ export class TripulanteDetalleComponent implements OnInit {
 
   private finishDocumentos(items: DocumentoItem[]) {
     this.documentos = items;
+    this.actualizarAvisoCaducidad(items);
     this.cargandoDocumentos = false;
     this.cdr.detectChanges();
   }
@@ -361,6 +466,65 @@ export class TripulanteDetalleComponent implements OnInit {
 
   private sanitizeFileName(name: string) {
     return name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+  }
+
+  private dateOnly(value?: string) {
+    const raw = String(value ?? '').trim();
+    if (!raw) {
+      return '';
+    }
+    const normalized = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+    return normalized === this.FECHA_SIN_CADUCIDAD ? '' : normalized;
+  }
+
+  private normalizeFechaCaducidad(value?: string) {
+    const raw = String(value ?? '').trim();
+    return raw || this.FECHA_SIN_CADUCIDAD;
+  }
+
+  private validarCaducidadDocumentos(userId?: string) {
+    const targetId = userId || this.targetUserId;
+    const action = targetId
+      ? this.tripulanteService.getDocumentosByUserId(targetId)
+      : this.tripulanteService.getDocumentos();
+
+    action.subscribe({
+      next: (res) => {
+        this.actualizarAvisoCaducidad(res?.documentos ?? []);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.tieneDocumentosCaducados = false;
+        this.avisoCaducidad = '';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private actualizarAvisoCaducidad(documentos: DocumentoItem[]) {
+    this.tieneDocumentosCaducados = (documentos ?? []).some((doc) =>
+      this.esDocumentoCaducado(doc?.fecha_caducidad)
+    );
+    this.avisoCaducidad = this.tieneDocumentosCaducados
+      ? 'Aviso: este tripulante tiene documentos caducados.'
+      : '';
+  }
+
+  private esDocumentoCaducado(fechaCaducidad?: string) {
+    const raw = this.dateOnly(fechaCaducidad);
+    if (!raw) {
+      return false;
+    }
+
+    const fecha = new Date(raw);
+    if (Number.isNaN(fecha.getTime())) {
+      return false;
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fecha.setHours(0, 0, 0, 0);
+    return fecha < hoy;
   }
 
   private recargarDocumentosActuales() {

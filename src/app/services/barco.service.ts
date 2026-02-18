@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Barco } from '../models/barco';
+import { catchError, switchMap, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -86,6 +87,35 @@ export class BarcoService {
       headers: this.authHeaders(),
       params
     });
+  }
+
+  updateDocumentoCaducidad(barcoId: string, archivoPath: string, tipo: string, fechaCaducidad: string) {
+    const params = new HttpParams().set('archivo_path', archivoPath);
+    return this.http.put(
+      `${this.API}/barco/${barcoId}/documentos`,
+      { fecha_caducidad: fechaCaducidad },
+      {
+        headers: this.authHeaders(),
+        params
+      }
+    ).pipe(
+      catchError((err) => {
+        const status = Number(err?.status ?? 0);
+        if (status !== 404 && status !== 405) {
+          return throwError(() => err);
+        }
+
+        return this.removeDocumento(barcoId, archivoPath).pipe(
+          switchMap(() =>
+            this.createDocumento(barcoId, {
+              tipo,
+              archivo_path: archivoPath,
+              fecha_caducidad: fechaCaducidad
+            })
+          )
+        );
+      })
+    );
   }
 
   private authHeaders() {

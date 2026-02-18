@@ -5,11 +5,12 @@
 
   <div class="navbar-nav me-auto">
     <a class="nav-link" routerLink="/tripulante">Tripulantes</a>
-    <a class="nav-link" routerLink="/barco">Barcos</a>
-    <a class="nav-link" routerLink="/puerto">Puertos</a>
-    <a class="nav-link" routerLink="/base">Bases</a>
-    <a class="nav-link" routerLink="/campana">Campanas</a>
-    <a class="nav-link" routerLink="/mapa-puertos-bases">Mapa</a>
+    <a class="nav-link" routerLink="/barco" *ngIf="isAdmin">Barcos</a>
+    <a class="nav-link" routerLink="/puerto" *ngIf="isAdmin">Puertos</a>
+    <a class="nav-link" routerLink="/base" *ngIf="isAdmin">Bases</a>
+    <a class="nav-link" routerLink="/campana" *ngIf="isAdmin">Campanas</a>
+    <a class="nav-link" routerLink="/mapa-puertos-bases" *ngIf="isAdmin">Mapa</a>
+    <a class="nav-link" routerLink="/users" *ngIf="isAdmin">Usuarios</a>
   </div>
 
   <div class="d-flex text-white">

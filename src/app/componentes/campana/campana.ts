@@ -37,7 +37,8 @@ export class CampanaComponent implements OnInit {
 
         this.campanaService.getCampanas().subscribe({
           next: (data) => {
-            this.campanas = data?.campanas ?? [];
+            const raw = data?.campanas ?? [];
+            this.campanas = raw.map((item) => this.normalizeCampanaResumen(item));
             this.cargando = false;
             this.cdr.detectChanges();
           },
@@ -86,5 +87,30 @@ export class CampanaComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  fechaLabel(value?: string) {
+    const raw = String(value ?? '').trim();
+    if (!raw) {
+      return '-';
+    }
+    const normalized = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+    const fecha = new Date(normalized);
+    return Number.isNaN(fecha.getTime())
+      ? normalized
+      : new Intl.DateTimeFormat('es-ES').format(fecha);
+  }
+
+  private normalizeCampanaResumen(item: any): CampanaResumen {
+    const id = String(item?.idCampanas ?? item?.idCampana ?? item?.id_campana ?? '').trim();
+    return {
+      idCampana: id,
+      idCampanas: id,
+      nombre: String(item?.nombre ?? ''),
+      idBarco: String(item?.idBarco ?? item?.id_barco ?? ''),
+      fechaDesde: String(item?.fechaDesde ?? item?.fecha_desde ?? ''),
+      fechaHasta: String(item?.fechaHasta ?? item?.fecha_hasta ?? ''),
+      motivo: String(item?.motivo ?? '')
+    };
   }
 }

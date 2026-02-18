@@ -36,6 +36,7 @@ export class LoginComponent {
       next: (res) => {
         this.auth.saveToken(res.session.access_token);
         this.auth.saveEmail(this.email);
+        this.auth.saveRole(res?.user?.role ?? res?.session?.user?.role ?? '');
         this.router.navigate(['/inicio']);
       },
       error: () => {

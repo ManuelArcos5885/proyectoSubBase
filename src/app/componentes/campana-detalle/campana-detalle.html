@@ -8,12 +8,36 @@
 
   <div class="card panel-card">
     <div class="card-body">
-      <h5 class="mb-3">Datos de la campana</h5>
+      <h5 class="mb-3">Datos de la campaña</h5>
       <div class="row">
-        <div class="col-md-12 mb-3">
+        <div class="col-md-6 mb-3">
           <label class="form-label">Nombre</label>
           <input class="form-control" [(ngModel)]="campana.nombre">
         </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Barco</label>
+          <app-barco-search-select
+            [barcos]="barcosDisponibles"
+            [selectedId]="selectedBarcoId"
+            (selectedIdChange)="onBarcoSelected($event)">
+          </app-barco-search-select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Fecha desde</label>
+          <input type="date" class="form-control" [(ngModel)]="campana.fechaDesde">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Fecha hasta</label>
+          <input type="date" class="form-control" [(ngModel)]="campana.fechaHasta">
+        </div>
+        <div class="col-md-12 mb-3">
+          <label class="form-label">Motivo</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="campana.motivo"></textarea>
+        </div>
+      </div>
+
+      <div *ngIf="avisoBarcoCaducado" class="alert alert-warning">
+        {{ avisoBarcoCaducado }}
       </div>
 
       <div *ngIf="mensaje" class="alert alert-info">

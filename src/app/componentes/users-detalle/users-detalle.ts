@@ -19,6 +19,7 @@ export class UsersDetalleComponent implements OnInit {
   mensaje = '';
   targetUserId = '';
   cargando = false;
+  isAdmin = false;
 
   constructor(
     private userService: UserService,
@@ -35,7 +36,8 @@ export class UsersDetalleComponent implements OnInit {
     this.userService.getMe().subscribe({
       next: (res) => {
         const role = (res?.user?.role ?? '').toUpperCase();
-        if (role !== 'ADMIN' && role !== 'ADMINISTRADOR') {
+        this.isAdmin = role === 'ADMIN' || role === 'ADMINISTRADOR';
+        if (!this.isAdmin) {
           this.router.navigate(['/tripulante-detalle']);
           return;
         }

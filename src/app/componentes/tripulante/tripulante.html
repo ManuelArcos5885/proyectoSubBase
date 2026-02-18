@@ -97,11 +97,13 @@
     <div class="col-md-6 col-lg-4" *ngFor="let item of tripulantes">
       <div
         class="panel-card h-100 tripulante-card"
-        [class.tripulante-card-caducado]="tieneDocumentosCaducados(item.user_id)"
         (click)="goDetalle(item)">
         <div class="panel-body">
           <div class="d-flex justify-content-between align-items-start">
-            <h5 class="mb-1">{{ item.nombre }} {{ item.apellidos }}</h5>
+            <div>
+              <h5 class="mb-1">{{ item.nombre }} {{ item.apellidos }}</h5>
+              <div class="small text-muted">{{ usuarioRelacionadoLabel(item) }}</div>
+            </div>
             <button class="btn btn-outline-danger btn-sm" (click)="eliminarTripulante(item, $event)">Eliminar</button>
           </div>
           <div class="text-muted mb-2">{{ item.puesto || 'Sin puesto' }}</div>

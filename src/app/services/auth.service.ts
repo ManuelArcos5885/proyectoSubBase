@@ -36,15 +36,38 @@ export class AuthService {
     localStorage.setItem('email', email);
   }
 
+  saveRole(role: string) {
+    localStorage.setItem('role', role);
+  }
+
   getEmail(): string {
     return localStorage.getItem('email') ?? '';
+  }
+
+  getRole(): string {
+    return localStorage.getItem('role') ?? '';
   }
 
   getToken(): string | null {
     return localStorage.getItem('token');
   }
 
+  getRoleFromToken(): string | null {
+    const decoded = this.decodeTokenPayload();
+    return decoded?.role || decoded?.user_role || decoded?.rol || decoded?.app_metadata?.role || null;
+  }
+
+  isAdminRole(role: string | null | undefined): boolean {
+    const normalized = String(role ?? '').trim().toUpperCase();
+    return normalized === 'ADMIN' || normalized === 'ADMINISTRADOR';
+  }
+
   getUserIdFromToken(): string | null {
+    const decoded = this.decodeTokenPayload();
+    return decoded?.sub || decoded?.user_id || decoded?.userId || null;
+  }
+
+  private decodeTokenPayload(): any | null {
     const token = this.getToken();
     if (!token) {
       return null;
@@ -56,8 +79,10 @@ export class AuthService {
         return null;
       }
 
-      const decoded = JSON.parse(atob(payload));
-      return decoded.sub || decoded.user_id || decoded.userId || null;
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const decodedJson = atob(padded);
+      return JSON.parse(decodedJson);
     } catch {
       return null;
     }
@@ -66,6 +91,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('email');
+    localStorage.removeItem('role');
     this.router.navigate(['/login']);
   }
 }
