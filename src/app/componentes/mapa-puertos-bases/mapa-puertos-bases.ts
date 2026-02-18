@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import * as L from 'leaflet';
 import { NavbarComponent } from '../navbar/navbar';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface PuntoMapa {
   id: string;
@@ -62,10 +63,10 @@ export class MapaPuertosBasesComponent implements AfterViewInit, OnDestroy {
   private capaBases = L.layerGroup();
   private puertosCargados = false;
   private basesCargadas = false;
-  private readonly endpointPuertos = ['/api/puertos', 'http://localhost:3000/puertos'];
-  private readonly endpointBases = ['/api/bases', 'http://localhost:3000/bases'];
-  private readonly endpointBarcosPuertoPrefix = ['/api/puerto', 'http://localhost:3000/puerto'];
-  private readonly endpointPuertoDetallePrefix = ['/api/puerto', 'http://localhost:3000/puerto'];
+  private readonly endpointPuertos = [`${environment.apiUrl}/puertos`];
+  private readonly endpointBases = [`${environment.apiUrl}/bases`];
+  private readonly endpointBarcosPuertoPrefix = [`${environment.apiUrl}/puerto`];
+  private readonly endpointPuertoDetallePrefix = [`${environment.apiUrl}/puerto`];
 
   constructor(
     private http: HttpClient,

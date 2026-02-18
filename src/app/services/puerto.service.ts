@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Puerto } from '../models/puerto';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PuertoService {
-  private API = 'http://localhost:3000';
+  private API = environment.apiUrl;
 
   constructor(
     private http: HttpClient,

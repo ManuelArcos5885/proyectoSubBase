@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Campana } from '../models/campana';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CampanaService {
-  private API = 'http://localhost:3000';
+  private API = environment.apiUrl;
 
   constructor(
     private http: HttpClient,

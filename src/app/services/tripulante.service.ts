@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Tripulante } from '../models/tripulante';
+import { environment } from '../../environments/environment';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TripulanteService {
-  private API = 'http://localhost:3000';
+  private API = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
